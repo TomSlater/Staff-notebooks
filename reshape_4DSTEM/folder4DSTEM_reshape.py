@@ -11,19 +11,24 @@ in the processing folder of the same visit. The following files get saved for ea
     - TIFF file and PNG file of incoherent BF reconstruction
     - TIFF file and PNG file of sparsed sum of the diffraction patterns
 User can choose via the parameters set below to use the fly-back over-exposed pixel 
-to reshape the data or by providing the scan dimensions.
+to reshape the data or by providing the scan dimensions. If the fly-back reshape fails, 
+it reshapes using the scan size. So scan_X and scan_Y values should be provided.
 
 This file can be run by:
    > runfile('.../folder4DSTEM_reshape.py')
+or from python:
+    import os
+    os.chdir(r’the path containing the attached .py files’)
+    exec(open('folder4DSTEM_reshape.py').read())
 """
 
-#user parameters:
+# User parameters:
 # =============================================================================
 fly_back = True
 frame_size = False
-#If using frame_size to reshape:
-scan_x = 256 #number of lines
-scan_y = 256 #number of probe positions per line
+# If using frame_size to reshape:
+scan_X = 256  # number of lines
+scan_Y = 256  # number of probe positions per line
 # =============================================================================
 import reshape_4DSTEM_funcs as reshape
 import hyperspy.api as hs
@@ -32,7 +37,7 @@ import time
 
 [acquisition_folder, processing_folder] = reshape.folders_setup()
 
-#For converting a series of mib datasets to hdf5
+# For converting a series of mib datasets to hdf5
 os.chdir(acquisition_folder)
 for dirName in os.listdir(acquisition_folder):
     time0 = time.time()
@@ -41,7 +46,7 @@ for dirName in os.listdir(acquisition_folder):
     try:
         for root, dirs, files in os.walk(acquisition_folder + '\\' + dirName, topdown = False):
             if os.path.exists(processing_folder + r'\\' + dirName):
-                #If the folder already exists assumes the hdf5 is already saved and moves on
+                # If the folder already exists assumes the hdf5 is already saved and moves on
                 print(dirName + ' Folder already exists!') 
             else:
                 for file_name in files:
@@ -55,14 +60,19 @@ for dirName in os.listdir(acquisition_folder):
                         print('loaded to hyperspy')
                         # checks to see if it is a multi-frame data before reshaping
                         if any(dp.axes_manager.navigation_axes):
-                            try:
                                 # attampt to reshape the data 
                                 if fly_back:
-                                    dp = reshape.reshape_4DSTEM_FlyBack(dp)
-                                    print('Data reshaped to: '+ str(dp.axes_manager.navigation_shape))
-                                    #making a binned version
+                                    try:
+                                        dp = reshape.reshape_4DSTEM_FlyBack(dp, scan_X)
+                                        print('Data reshaped to: '+ str(dp.axes_manager.navigation_shape))
+                                    except :
+                                        print('Data reshape using flyback failed! - Reshaping using scan size instead.')
+                                        # if reshape fales bin data dowm 
+                                        dp = reshape.reshape_4DSTEM_FrameSize(dp, scan_X, scan_Y)
+                                        dp_bin = dp.rebin(scale = (1,1,4,4))
+                                        img_flag = 1
                                 elif frame_size:
-                                    dp = reshape.reshape_4DSTEM_FrameSize(dp, scan_x, scan_y)
+                                    dp = reshape.reshape_4DSTEM_FrameSize(dp, scan_X, scan_Y)
                                     print('Data reshaped to: '+ str(dp.axes_manager.navigation_shape))
                                 else:
                                     print('=====================================================')
@@ -82,13 +92,7 @@ for dirName in os.listdir(acquisition_folder):
                                 sum_dp_subset = dp_subset.sum()
                                 
                                 img_flag = 1
-
-                            except :
-                                print('Data not reshaped - saving as image stack')
-                                #if reshape fales bin data dowm 
-                                dp_bin = dp.rebin(scale = (1,4,4))
-                            
-                #save data
+                # save data
                 os.chdir(processing_folder)
                        
                 os.mkdir(dirName)

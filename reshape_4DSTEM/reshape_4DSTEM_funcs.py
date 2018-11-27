@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import time
 import sys
+from scipy.signal import find_peaks
 
 def folders_setup():
     """
@@ -22,9 +23,9 @@ def folders_setup():
         processing_folder: str path
     """
     
-    acquisition_folder = input("Enter the Medipix acquisition folder path (use time-stamping): ")
+    acquisition_folder = input('Enter the Medipix acquisition folder path (use time-stamping): ')
     
-    assert os.path.exists(acquisition_folder), "We did not find the folder at, "+str(acquisition_folder)
+    assert os.path.exists(acquisition_folder), 'We did not find the folder at, '+str(acquisition_folder)
     
     acquisition_path = Path(acquisition_folder)
     processing_folder = []
@@ -56,6 +57,7 @@ def reshape_4DSTEM_FrameSize(data, scan_x, scan_y):
     
     if frames_total <= data.axes_manager[0].size:
         skip = data.axes_manager[0].size - frames_total
+        print(skip)
         data_skip = data.inav[skip:]
         data_skip.data = data_skip.data.reshape(scan_x, scan_y, 256, 256)
         data_skip.axes_manager._axes.insert(0, data_skip.axes_manager[0].copy())
@@ -71,7 +73,7 @@ def reshape_4DSTEM_FrameSize(data, scan_x, scan_y):
     
     return data_skip
 
-def reshape_4DSTEM_FlyBack(data, plot_sum = False):
+def reshape_4DSTEM_FlyBack(data, scan_x, plot_sum = False):
     """
     Reshapes the lazy-imported stack of dimensions: (xxxxxx|256, 256) to the correct scan pattern 
     shape: (x, y | 256,256).
@@ -95,11 +97,13 @@ def reshape_4DSTEM_FlyBack(data, plot_sum = False):
     data_crop_t_sum = data_crop_t.sum()
     intensity_array = data_crop_t_sum.data #summing over patterns
     intensity_array = intensity_array.compute() #out of lazy
-    #Checking for local maxima to be more than 10 times the neighbouring elements
-    factor = 0.2 * (np.max(intensity_array) / np.min(intensity_array))
-    local_max = (np.r_[True, intensity_array[1:] > factor* intensity_array[:-1]] 
-            & np.r_[intensity_array[:-1] > factor* intensity_array[1:], True])
-    
+    #Checking for local maxima to be more than _factor_ times the neighbouring elements
+    #This factor is currently not robust to all datasets!
+    #factor = np.int(max(intensity_array) / np.mean(intensity_array))
+    #print(factor)
+    #local_max = (np.r_[True, intensity_array[1:] > factor* intensity_array[:-1]] 
+    #        & np.r_[intensity_array[:-1] > factor* intensity_array[1:], True])
+    peaks = find_peaks(intensity_array, distance= scan_x)
     if plot_sum == True:
         import matplotlib.pyplot as plt
         
@@ -108,13 +112,13 @@ def reshape_4DSTEM_FlyBack(data, plot_sum = False):
         ax2 = fig1.add_subplot(122)
         
         ax1.plot(intensity_array, 'k')
-        ax2.plot(local_max, 'b')
+        ax2.plot(peaks[0],np.ones(len(peaks[0])),'*')
         
         ax1.set_title('sum intensity of first ~10 lines of frame')
         ax2.set_title('peaks detected')
     
-    peaks = np.ravel(np.where(local_max))
-    lines = np.ediff1d(peaks) #Diff between consecutive elements of the array
+    #peaks = np.ravel(np.where(local_max))
+    lines = np.ediff1d(peaks[0]) #Diff between consecutive elements of the array
     line_len = lines[lines.size-1] # Assuming the last element to be the line length
     check = np.ravel(np.where(lines == line_len)) #Checking line lengths
     
@@ -122,10 +126,10 @@ def reshape_4DSTEM_FlyBack(data, plot_sum = False):
     if ~np.all(line_confirm): #In case there is a False in there take the index of the last False
         
         start_ind = np.where(line_confirm[0] == False)[-1][-1] + 2
-        skip_ind = peaks[start_ind]
+        skip_ind = peaks[0][start_ind]
         
     else: #In case they are all True take the index of the first True
-        skip_ind = peaks[check[0]] #number of frames to skip at the beginning
+        skip_ind = peaks[0][check[0]] #number of frames to skip at the beginning
        
       
     n_lines = floor((data.data.shape[0] - skip_ind) / line_len) #Number of lines
