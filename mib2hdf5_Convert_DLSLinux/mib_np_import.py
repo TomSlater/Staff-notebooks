@@ -236,7 +236,7 @@ def read_mib(hdr_info, fp, mmap_mode='r', save_hdf = False, path = None):
     hdr_bits = int(hdr_info['data offset'] * hdr_multiplier)
     #print(hdr_bits)
 	
-    print(hdr_bits, data_length, hdr_multiplier)
+    #print(hdr_bits, data_length, hdr_multiplier)
 	
     data = np.memmap(fp,
                      offset=reader_offset,

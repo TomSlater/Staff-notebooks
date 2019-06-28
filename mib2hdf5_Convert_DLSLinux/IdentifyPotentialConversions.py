@@ -10,7 +10,8 @@ def check_differences(beamline, year, visit, folder = None):
     raw_dirs = []
     if folder:
         # check that the path folder exists
-        raw_location = os.path.join('/dls',beamline,'data', year, visit, 'Merlin', os.path.relpath(folder))
+        raw_location = os.path.join('/dls',beamline,'data', year, visit, os.path.relpath(folder))
+        print(raw_location)
         if not os.path.exists(raw_location):
             print('This folder ', raw_location,'does not exist!') 
             print('The expected format for folder is sample1/dataset1/')
@@ -31,8 +32,8 @@ def check_differences(beamline, year, visit, folder = None):
         # look at the files and see if there are any mib files there
         for f in files:
             if f.endswith('mib'):
-                if folder:
-                    p = './'+ folder + p[1:]
+#                if folder:
+#                    p = './'+ folder + p[1:]
                 #mib_files.append((p, f))
                 mib_files.append(os.path.join(str(p), str(f)))
                 #print(p)
