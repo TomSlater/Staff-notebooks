@@ -5,4 +5,4 @@
 #$ -l m_mem_free=100G
 
 module load python/3.7
-python /dls/science/groups/e02/code/python_conversion_quadMedipix/working_versions/v1/mib2hdf_watch04_np_TEM.py e02 2019 mg22317-15 '' 0
+python /home/eha56862/code/DLS_cluster_conversion/mib2hdf_watch_convert.py e02 2019 mg22317-15 0

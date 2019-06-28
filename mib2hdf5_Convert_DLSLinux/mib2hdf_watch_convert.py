@@ -32,7 +32,7 @@ def convert(beamline, year, visit, mib_to_convert, STEM_flag, scan_X, folder):
     import numpy as np
     
     if folder:
-        raw_location = os.path.join('/dls',beamline,'data', year, visit, 'Merlin', os.path.relpath(folder))
+        raw_location = os.path.join('/dls',beamline,'data', year, visit, os.path.relpath(folder))
     else:
         raw_location = os.path.join('/dls',beamline,'data', year, visit, 'Merlin')  
         
@@ -160,7 +160,7 @@ def watch_convert(beamline, year, visit, STEM_flag, scan_X, folder):
     #holder for raw data path
     import os, time
     if folder:
-        raw_location = os.path.join('/dls',beamline,'data', year, visit, 'Merlin', os.path.relpath(folder))
+        raw_location = os.path.join('/dls',beamline,'data', year, visit, os.path.relpath(folder))
     else:
         raw_location = os.path.join('/dls',beamline,'data', year, visit, 'Merlin')
     if bool(to_convert):
@@ -223,10 +223,10 @@ if __name__ == "__main__":
     parser.add_argument('visit', help='Session visit code')
     parser.add_argument('STEM_flag', nargs= '?',default=1, help='OPTION to specify non-STEM Medipix data \
                         - default is STEM')
-    parser.add_argument('scan_X', nargs= '?',default=256,help='OPTION to specify number of probe positions in \
+    parser.add_argument('scan_X', nargs= '?',default=256,type=int,help='OPTION to specify number of probe positions in \
                         x direction- default is 256')
     parser.add_argument('folder', nargs= '?',default=None, help='OPTION to add a specific folder within a visit \
-                        Merlin folder to look for data, e.g. sample1/dataset1/')
+                        to look for data, e.g. sample1/dataset1/. If None the assumption would be to look in Merlin folder')
     v_help = "Display all debug log messages"
     parser.add_argument("-v", "--verbose", help=v_help, action="store_true",
                         default=False)
