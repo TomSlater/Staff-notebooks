@@ -3,6 +3,7 @@ from IdentifyPotentialConversions import check_differences
 import gc
 from mib_np_import import *
 
+#%%
 def max_contrast8(d):
     data = d.data
     data = data - data.min()
@@ -10,7 +11,8 @@ def max_contrast8(d):
     d.data = data
     return d
 
-
+#%%
+    
 def convert(beamline, year, visit, mib_to_convert, STEM_flag, scan_X, folder):
     """    
     This is to convert a set of time-stamped 4DSTEM folders (mib_files) into a
@@ -73,16 +75,19 @@ def convert(beamline, year, visit, mib_to_convert, STEM_flag, scan_X, folder):
             except ValueError:
                 print('file could not be read into an array!')
             if (STEM_flag == 0 or STEM_flag == '0'): # if it is TEM data
-                process_path = proc_location +'/'+ os.path.join(*mib_path.split('/')[6:])
-                if not os.path.exists(process_path):
-                    os.makedirs(process_path)
-                dp.save(process_path + '/' +mib_list[0], extension = 'hdf5')
+                if folder:
+                    saving_path = proc_location +'/'+folder
+                else:    
+                    saving_path = proc_location +'/'+ os.path.join(*mib_path.split('/')[6:])
+                if not os.path.exists(saving_path):
+                    os.makedirs(saving_path)
+                dp.save(saving_path + '/' +mib_list[0], extension = 'hdf5')
                 dp_sum = max_contrast8(dp.sum())
-                dp_sum.save(process_path + '/' +mib_list[0]+'_sum', extension = 'jpg')
+                dp_sum.save(saving_path + '/' +mib_list[0]+'_sum', extension = 'jpg')
             else:
-                process_path = proc_location +'/'+ os.path.join(*mib_path.split('/')[6:])
-                if not os.path.exists(process_path):
-                    os.makedirs(process_path)
+                saving_path = proc_location +'/'+ os.path.join(*mib_path.split('/')[6:])
+                if not os.path.exists(saving_path):
+                    os.makedirs(saving_path)
                 img_flag = 0
                 
                 print('Data loaded to hyperspy')
@@ -118,20 +123,20 @@ def convert(beamline, year, visit, mib_to_convert, STEM_flag, scan_X, folder):
                     if img_flag == 1:
                         print('Saving average diffraction pattern')
                         file_dp = mib_list[0].rpartition('.')[0]+ '_subset_dp'
-                        sum_dp_subset.save(process_path+'/'+file_dp, extension = 'tiff')
-                        sum_dp_subset.save(process_path+'/'+file_dp, extension = 'jpg')
+                        sum_dp_subset.save(saving_path+'/'+file_dp, extension = 'tiff')
+                        sum_dp_subset.save(saving_path+'/'+file_dp, extension = 'jpg')
                         print('Saving ibf image')
                         file_ibf =  mib_list[0].rpartition('.')[0]+ '_ibf'
-                        ibf.save(process_path+'/'+file_ibf, extension = 'tiff')
-                        ibf.save(process_path+'/'+file_ibf, extension = 'jpg')
+                        ibf.save(saving_path+'/'+file_ibf, extension = 'tiff')
+                        ibf.save(saving_path+'/'+file_ibf, extension = 'jpg')
                                   
                 print('Saving hdf5 : ' + mib_list[0].rpartition('.')[0] +'.hdf5')
-                dp.save(process_path+'/'+mib_list[0], extension = 'hdf5')
+                dp.save(saving_path+'/'+mib_list[0], extension = 'hdf5')
                 print('Saved hdf5 : ' + mib_list[0].rpartition('.')[0] +'.hdf5')
                     
                 if dp.axes_manager[0].size > 1:
                     print('Saving binned data: ' + mib_list[0].rpartition('.')[0] + '_binned.hdf5')
-                    dp_bin.save(process_path+ '/'+'binned_' + mib_list[0], extension = 'hdf5')
+                    dp_bin.save(saving_path+ '/'+'binned_' + mib_list[0], extension = 'hdf5')
                     print('Saved binned data: binned_' + mib_list[0].rpartition('.')[0] + '.hdf5')
                     del dp_bin
                 
@@ -141,19 +146,23 @@ def convert(beamline, year, visit, mib_to_convert, STEM_flag, scan_X, folder):
             
         elif mib_num > 1:
             if (STEM_flag == 0 or STEM_flag == '0'):
-                process_path = proc_location +'/'+ os.path.join(*mib_path.split('/')[6:])
-                if not os.path.exists(process_path):
-                    os.makedirs(process_path)
+                if folder:
+                    saving_path = proc_location +'/'+folder
+                else:    
+                    saving_path = proc_location +'/'+ os.path.join(*mib_path.split('/')[6:])
+                if not os.path.exists(saving_path):
+                    os.makedirs(saving_path)
                 for k, file in enumerate(mib_list):
                     print(mib_path)
                     print(file)
                     dp = mib_np_reader('/' +mib_path + '/'+ file)
                     
-                    dp.save(process_path + '/' +file, extension = 'hdf5')
+                    dp.save(saving_path + '/' +file, extension = 'hdf5')
                     dp_sum = max_contrast8(dp.sum())
-                    dp_sum.save(process_path + '/' +file+'_sum', extension = 'jpg')
+                    dp_sum.save(saving_path + '/' +file+'_sum', extension = 'jpg')
                     
-
+#%%
+                    
 def watch_convert(beamline, year, visit, STEM_flag, scan_X, folder):
     
     [to_convert, mib_files, mib_to_convert] = check_differences(beamline, year, visit, folder)

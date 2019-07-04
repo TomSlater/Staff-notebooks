@@ -14,6 +14,7 @@ import os
 import numpy as np
 import h5py
 import dask.array as da
+import dask
 import hyperspy.api as hs
 
 def _manageHeader(fname):
@@ -135,6 +136,8 @@ def parse_hdr(fp):
 		
     # print(hdr_info)
     return hdr_info
+
+
 
 def read_mib(hdr_info, fp, mmap_mode='r', save_hdf = False, path = None):
     """Read the raw file object 'fp' based on the information given in the
@@ -272,16 +275,9 @@ def read_mib(hdr_info, fp, mmap_mode='r', save_hdf = False, path = None):
             #print(file_size)
             single_frame = mib_file_size_dict.get(str(hdr_info['Counter Depth (number)']))
             correct_size = int(file_size / single_frame)
-            #print(correct_size)
-            #print(data.shape[0] / correct_size)
-            #print('line 409 data shape: ', data.shape)
-            #data = data[hdr_bits:]
-            #data = data.reshape(hdr_bits +width_height, correct_size)
-            #data = data[hdr_bits:,:].reshape(correct_size, width_height)
-            #print(data.shape)
             data = data.reshape(-1, width_height + hdr_bits)[:,-width_height:].reshape(correct_size, width, height)
                 
-        #print()
+        
         
         if hdr_info['raw'] == 'R64':
             if hdr_info['Counter Depth (number)'] == 24 or  hdr_info['Counter Depth (number)'] == 12:
@@ -331,7 +327,9 @@ def read_mib(hdr_info, fp, mmap_mode='r', save_hdf = False, path = None):
     elif record_by == 'dont-care':  # stack of images
         size = (height, width)
         data = data.reshape(size)
+        
     da_data = da.from_array(data)
+        
     if save_hdf:
         os.chdir(path)
         f = h5py.File('raw_data', 'w')

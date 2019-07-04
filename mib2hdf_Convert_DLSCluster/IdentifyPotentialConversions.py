@@ -2,6 +2,7 @@ import os
 import argparse
 import sys
 
+#%%
 def check_differences(beamline, year, visit, folder = None):
     # print("Starting main function")
     # fist check to see which visit is active
@@ -80,11 +81,12 @@ def check_differences(beamline, year, visit, folder = None):
     
     return to_convert, mib_files, mib_to_convert
 
-
+#%%
 def main(beamline, year, visit, folder = None):
     check_differences(beamline, year, visit, folder = None)
 
-
+#%%
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('beamline', help='Beamline name')
